@@ -3,15 +3,15 @@
 
 ## Pre-requisites
 
-`npm version 17+` See how to download and install in [Docker site.](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+`npm` See how to download and install in [Npm site.](https://www.npmjs.com/get-npm)
 
-`node version 1.20+` See how to download and install in [Docker site.](https://docs.docker.com/compose/install/#install-compose)
+`node` See how to download and install in [Node site.](https://nodejs.org/en/download/)
 
-## Development
-Copy env vars:
+## Running
 ```bash
-cp .env.example .env
+node index.js
 ```
+Then access http://localhost:3000/ in several tabs
 
 ## Author
 
