@@ -12,8 +12,7 @@ Copy env vars:
 ```bash
 cp .env.example .env
 ```
-```
 
-## Authors
+## Author
 
 * Danillo Barreto <danillosbarreto@gmail.com>
