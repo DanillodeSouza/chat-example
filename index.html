@@ -29,7 +29,7 @@
         }
         socket.emit('chat message', fullMessage);
         $('#messages').append($('<li>').text(fullMessage));
-        $('#messages').val('');
+        $('#message').val('');
         return false;
       });
       socket.on('chat message', function(msg){
@@ -44,8 +44,25 @@
       socket.on('user disconnected', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
-      $("#message").on("keypress", function(e){
-        socket.emit('typing', $("#nickname-input").val() + " is typing...");
+      let canEmit = true;
+      let clearTimerId;
+      $("#message").on("keyup", function(e){
+        if (!canEmit) {
+          return;
+        }
+        canEmit = false;
+        setTimeout(function(){
+          canEmit = true;
+        }, 1);
+        if (!$(this).val()) {
+          socket.emit('not typing', $("#nickname-input").val());
+          return;
+        }
+        socket.emit('typing', $("#nickname-input").val());
+        clearTimeout(clearTimerId);
+        clearTimerId = setTimeout(function () {
+          socket.emit('not typing', $("#nickname-input").val());
+        }, 5000);
       });
     });
   </script>
