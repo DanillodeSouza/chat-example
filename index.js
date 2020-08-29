@@ -1,20 +1,62 @@
-var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const app = require('express')();
+const http = require('http').createServer(app);
+let randomColor = require('randomcolor');
+const io = require('socket.io')(http);
+const uuid = require('uuid');
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-let usersTypingList = [];
+const users = [];
+const usersTypingList = [];
+const connnections = [];
+
 io.on('connection', (socket) => {
   io.emit('connected', 'User has connected');
+  connnections.push(socket);
+
+  let color = randomColor();
+
+  socket.username = 'Anonymous';
+  socket.color = color;
+
+  //listen on change_username
+  socket.on('change_username', nickName => {
+    let id = uuid.v4(); // create a random id for the user
+    socket.id = id;
+    socket.username = nickName;
+    users.push({id, username: socket.username, color: socket.color});
+    updateUsernames();
+  })
+
+  const updateUsernames = () => {
+    // console.log(users);
+    io.emit('get users', users)
+  }
+
   socket.on('disconnect', () => {
-    io.emit('user disconnected', 'User has disconnected');
+    if (!socket.username) {
+      return;
+    }
+
+   let user = undefined;
+   for (let i= 0; i < users.length; i++) {
+       if (users[i].id === socket.id) {
+           user = users[i];
+           break;
+       }
+   }
+   users.splice(user,1);
+  
+   updateUsernames();
+   connnections.splice(connnections.indexOf(socket), 1);
   });
+
   socket.on('chat message', (msg) => {
     socket.broadcast.emit('chat message', msg);
   });
+
   socket.on('typing', (user) => {
     if (usersTypingList.indexOf(user) == -1) {
       usersTypingList.push(user);
@@ -22,6 +64,7 @@ io.on('connection', (socket) => {
 
     emitUsersTypingIfNeeded(usersTypingList, socket);
   });
+
   socket.on('not typing', (user) => {
     let indexOf = usersTypingList.indexOf(user);
     if (indexOf == -1) {
@@ -33,7 +76,7 @@ io.on('connection', (socket) => {
     emitUsersTypingIfNeeded(usersTypingList, socket);
   });
 
-  function emitUsersTypingIfNeeded(usersTypingList, socket) {
+  const emitUsersTypingIfNeeded = (usersTypingList, socket) => {
     if (usersTypingList.length == 0) {
       io.emit('typing', '');
       return;

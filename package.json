@@ -4,6 +4,11 @@
     "description": "my first socket.io app",
     "dependencies": {
         "express": "^4.15.2",
-        "socket.io": "^2.3.0"
+        "randomcolor": "^0.6.2",
+        "socket.io": "^2.3.0",
+        "uuid": "^8.3.0"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.4"
     }
 }

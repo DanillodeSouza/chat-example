@@ -3,43 +3,93 @@
   <head>
     <title>Socket.IO chat</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 60%; margin-right: 0.5%; }
-      #nickname-input { width: 29%; }
+      * { margin: 0; padding: 0; }
+      body {
+        font: 13px Helvetica, Arial;
+        background-color: rgba(0,20,29,0.5);
+      }
+      section { float: left;}
+      #modal-overlay {
+        display: block;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+      .modal-content {
+        margin-top: 40%;
+        width: 100%;
+        text-align: center;
+      }
+      #main { width: 75%; }
+      #usersSection { width: 20%; margin-left: 30px; }
+      form input { border: 0; padding: 10px; width: 59%; margin-right: 0.5%; }
+      #nickname-input {
+        width: 29%;
+        border: 0;
+        border-bottom-color: currentcolor;
+        border-bottom-style: none;
+        border-bottom-width: 0px;
+        color: white;
+        background: transparent;
+        border-bottom: 1px solid;
+      }
       #typing { position: fixed; bottom: 50px; left: 5px;}
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages-container { height: 900px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; height: inherit; overflow: auto; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
+      #messages-form {
+        position: fixed;
+        bottom: 200px;
+        width: 100%;
+        text-align: center;
+      }
+      .with-nickname {
+        display: none;
+      }
     </style>
   </head>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
   <script>
     $(function () {
+      $('#nickname-input').focus();
       var socket = io();
-      $('form').submit(function(e){
-        e.preventDefault(); // prevents page reloading
+      $('#nickname-form').submit(function(e){
+        e.preventDefault();
+        const nickNameValue = $("#nickname-input").val();
+        socket.emit('change_username', nickNameValue);
+        $("#modal-overlay").hide();
+        $(".with-nickname").show('slow');
+        $("#message").focus();
+      });
+      $('#messages-form').submit(function(e){
+        e.preventDefault();
         const nickNameValue = $("#nickname-input").val();
         let fullMessage = '';
         if (nickNameValue != '') {
           fullMessage = nickNameValue + ': ' + $('#message').val();
         }
         socket.emit('chat message', fullMessage);
-        $('#messages').append($('<li>').text(fullMessage));
-        $('#message').val('');
+
+        //$('#messages').append($('<li>').text(fullMessage));
+        $('#message').val('').focus();
         return false;
       });
       socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
+      socket.on('get users', function(users){
+        let html = '';
+        users.forEach(user => {
+          console.log(user);
+          html += "<li style=\"color: " + user.color + "\">" + user.username + "</li>";
+        });
+        $('#users').html(html);
+      });
       socket.on('typing', function(msg){
         $('#typing').text(msg);
-      });
-      socket.on('connected', function(msg){
-        $('#messages').append($('<li>').text(msg));
       });
       socket.on('user disconnected', function(msg){
         $('#messages').append($('<li>').text(msg));
@@ -50,30 +100,56 @@
         if (!canEmit) {
           return;
         }
+        const nickNameValue = $("#nickname-input").val();
+        if (!nickNameValue) {
+          return;
+        }
         canEmit = false;
         setTimeout(function(){
           canEmit = true;
         }, 1);
         if (!$(this).val()) {
-          socket.emit('not typing', $("#nickname-input").val());
+          socket.emit('not typing', nickNameValue);
           return;
         }
-        socket.emit('typing', $("#nickname-input").val());
+        socket.emit('typing', nickNameValue);
         clearTimeout(clearTimerId);
         clearTimerId = setTimeout(function () {
-          socket.emit('not typing', $("#nickname-input").val());
-        }, 5000);
+          socket.emit('not typing', nickNameValue);
+        }, 2000);
       });
     });
   </script>
 
   <body>
-    <ul id="messages"></ul>
-    <span id="typing"></span>
-    <form action="">
+    <section id="modal-overlay">
+      <div class="modal-content">
+        <form id="nickname-form">
+          <input id="nickname-input" autocomplete="off" placeholder="Nickname" type="text" required/>
+        </form>
+      </div>
+    </section>
+
+    <section id="main" class="with-nickname">
+      <div id="messages-container">
+        <ul id="messages">
+          <li>Messages</li>
+        </ul>
+      </div>
+      <span id="typing"></span>
+    </section>
+
+    <section id="usersSection" class="with-nickname">
+      <div>
+        <h2>Online Users</h2>
+        <ul id="users"></ul>
+      </div>
+    </section>
+
+    <form id="messages-form" class="with-nickname">
       <input id="message" autocomplete="off" placeholder="Text a message" required/>
-      <input id="nickname-input" autocomplete="off" placeholder="Nickname" required/>
       <button>Send</button>
     </form>
+
   </body>
 </html>
