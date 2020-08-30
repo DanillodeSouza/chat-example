@@ -10,12 +10,8 @@ app.get('/', (req, res) => {
 
 const users = [];
 const usersTypingList = [];
-const connnections = [];
 
 io.on('connection', (socket) => {
-  io.emit('connected', 'User has connected');
-  connnections.push(socket);
-
   let color = randomColor();
 
   socket.username = 'Anonymous';
@@ -27,11 +23,11 @@ io.on('connection', (socket) => {
     socket.id = id;
     socket.username = nickName;
     users.push({id, username: socket.username, color: socket.color});
+    io.emit('user connected', nickName + ' has joined the conversation.');
     updateUsernames();
   })
 
   const updateUsernames = () => {
-    // console.log(users);
     io.emit('get users', users)
   }
 
@@ -40,17 +36,22 @@ io.on('connection', (socket) => {
       return;
     }
 
-   let user = undefined;
-   for (let i= 0; i < users.length; i++) {
-       if (users[i].id === socket.id) {
-           user = users[i];
-           break;
-       }
-   }
-   users.splice(user,1);
-  
-   updateUsernames();
-   connnections.splice(connnections.indexOf(socket), 1);
+    if (socket.username == 'Anonymous') {
+      return;
+    }
+
+    let user = undefined;
+    for (let i= 0; i < users.length; i++) {
+      if (users[i].id === socket.id) {
+        user = users[i];
+        break;
+      }
+    }
+    users.splice(user,1);
+
+    updateUsernames();
+
+    socket.broadcast.emit('user disconnected', socket.username + ' has left the conversation.');
   });
 
   socket.on('chat message', (msg) => {

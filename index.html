@@ -80,19 +80,21 @@
       socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
+      socket.on('user connected', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
+      socket.on('user disconnected', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
       socket.on('get users', function(users){
         let html = '';
         users.forEach(user => {
-          console.log(user);
           html += "<li style=\"color: " + user.color + "\">" + user.username + "</li>";
         });
         $('#users').html(html);
       });
       socket.on('typing', function(msg){
         $('#typing').text(msg);
-      });
-      socket.on('user disconnected', function(msg){
-        $('#messages').append($('<li>').text(msg));
       });
       let canEmit = true;
       let clearTimerId;
