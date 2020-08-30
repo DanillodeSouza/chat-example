@@ -8,6 +8,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/private', (req, res) => {
+  res.sendFile(__dirname + '/private.html');
+});
+
 const users = [];
 const usersTypingList = [];
 
